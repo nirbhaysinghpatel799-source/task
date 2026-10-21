@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Task Notes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f7fb;--card:#fff;--text:#1d2433;--muted:#6b7385;--line:#e3e6ee;--accent:#4f46e5;--green:#16a34a;--red:#dc2626;--grey:#b8bfcc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141b;--card:#1c1f2a;--text:#eef0f6;--muted:#9aa1b3;--line:#2c3040;--accent:#818cf8;--green:#22c55e;--red:#f87171;--grey:#4a5063}}
+:root[data-theme="dark"]{--bg:#12141b;--card:#1c1f2a;--text:#eef0f6;--muted:#9aa1b3;--line:#2c3040;--accent:#818cf8;--green:#22c55e;--red:#f87171;--grey:#4a5063}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:24px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.add{display:flex;gap:8px;margin-bottom:16px}
+input[type=text],input[type=month]{flex:1;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-size:16px}
+button{font:inherit;cursor:pointer}
+.btn{padding:12px 18px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:600}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tab{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:10px;font-weight:600}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.task{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.tick{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--grey);background:transparent;color:#fff;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+.tick.done{background:var(--green);border-color:var(--green)}
+.tick.late{background:var(--red);border-color:var(--red)}
+.body{flex:1;min-width:0}
+.txt{word-break:break-word}
+.done-t .txt{text-decoration:none}
+.meta{font-size:12px;color:var(--muted);margin-top:3px}
+.badge{font-weight:600}
+.b-done{color:var(--green)}.b-late{color:var(--red)}
+.del{border:0;background:none;color:var(--muted);font-size:20px;padding:4px 8px}
+.empty{text-align:center;color:var(--muted);padding:30px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center}
+.lock{max-width:380px;margin:0 auto;padding:70px 20px;text-align:center}
+.lock .ico{font-size:44px}
+.lock input{width:100%;margin:6px 0}
+.lock .btn{width:100%;margin-top:8px}
+#lerr{color:var(--red);min-height:20px;font-size:14px;margin-top:8px}
+.link{background:none;border:0;color:var(--muted);font-size:13px;margin-top:18px;text-decoration:underline}
+body{font-family:'Poppins',system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(600px 420px at 95% -5%,color-mix(in srgb,var(--accent) 30%,transparent),transparent),radial-gradient(520px 420px at -10% 35%,color-mix(in srgb,var(--green) 18%,transparent),transparent),radial-gradient(500px 400px at 80% 100%,color-mix(in srgb,#ec4899 18%,transparent),transparent)}
+h1{font-size:28px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(90deg,var(--accent),#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wrap{padding-top:28px}
+.sub{font-weight:500}
+.add{background:var(--card);padding:7px;border-radius:18px;border:1px solid var(--line);box-shadow:0 10px 30px -14px color-mix(in srgb,var(--accent) 70%,transparent)}
+.add input{border:0;background:transparent;outline:none}
+.btn{background:linear-gradient(135deg,var(--accent),#ec4899);border-radius:13px;box-shadow:0 8px 18px -8px color-mix(in srgb,var(--accent) 90%,transparent);transition:transform .15s}
+.btn:active{transform:scale(.96)}
+.tabs{background:var(--card);padding:5px;border-radius:16px;border:1px solid var(--line)}
+.tab{border:0;background:transparent;border-radius:12px;transition:.2s}
+.tab.on{background:linear-gradient(135deg,var(--accent),#ec4899);color:#fff;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--accent) 90%,transparent)}
+.row>.tab{background:var(--card);border:1px solid var(--line);color:var(--text)}
+.task{border-radius:16px;border-left:5px solid var(--grey);padding:14px;box-shadow:0 8px 22px -14px rgba(0,0,0,.35);animation:pop .3s ease;transition:transform .15s}
+.task:hover{transform:translateY(-2px)}
+.task:has(.tick.done){border-left-color:var(--green)}
+.task:has(.tick.late){border-left-color:var(--red)}
+.tick{width:38px;height:38px;font-weight:700;transition:.2s}
+.tick:hover{transform:scale(1.1)}
+.tick.done{box-shadow:0 0 0 5px color-mix(in srgb,var(--green) 22%,transparent)}
+.tick.late{box-shadow:0 0 0 5px color-mix(in srgb,var(--red) 22%,transparent)}
+.txt{font-weight:500}
+.stat{border-radius:16px;box-shadow:0 8px 22px -16px rgba(0,0,0,.4)}
+.stat b{font-size:28px;font-weight:700}
+.del:hover{color:var(--red)}
+input[type=month]{border-radius:14px;flex:none;width:100%}
+.empty::before{content:"📝";display:block;font-size:42px;margin-bottom:6px}
+.lock{margin-top:60px;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:26px;box-shadow:0 24px 60px -30px color-mix(in srgb,var(--accent) 80%,transparent);padding:36px 24px}
+.lock .ico{animation:float 3s ease-in-out infinite}
+.lock input{border-radius:13px}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes float{50%{transform:translateY(-6px)}}
+.stat svg{width:68px;height:68px;display:block;margin:0 auto 6px}
+.ring-p{transition:stroke-dashoffset .8s ease}
+.stat b{font-size:20px}
+.stat{background:linear-gradient(160deg,var(--card),color-mix(in srgb,var(--accent) 7%,var(--card)));padding:14px 6px}
+.stat svg{width:80px;height:80px}
+.ring-p{animation:fadein .8s ease}
+@keyframes fadein{from{opacity:0}}
+.wv{animation:wave 3.2s linear infinite}
+.wv2{animation-duration:5.5s;animation-direction:reverse}
+@keyframes wave{to{transform:translateX(-72px)}}
+.stat{transition:transform .2s}.stat:hover{transform:translateY(-4px)}
+.stat svg{width:88px;height:88px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
+.bubbles{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.bubbles i{position:absolute;bottom:-70px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.7),color-mix(in srgb,var(--accent) 22%,transparent));animation:rise var(--d) linear var(--l) infinite;opacity:0}
+@keyframes rise{10%{opacity:.8}to{transform:translate(30px,-115vh);opacity:0}}
+body::before{animation:drift 14s ease-in-out infinite alternate}
+@keyframes drift{to{transform:scale(1.18) translate(-2%,2%)}}
+.sea{position:fixed;left:0;right:0;bottom:0;height:90px;z-index:-1;pointer-events:none;overflow:hidden}
+.sea svg{position:absolute;bottom:0;left:0;width:200%;height:90px}
+.sea .s1{fill:color-mix(in srgb,var(--accent) 16%,transparent);animation:sea 14s linear infinite}
+.sea .s2{fill:color-mix(in srgb,#ec4899 12%,transparent);animation:sea 22s linear infinite reverse}
+@keyframes sea{to{transform:translateX(-50%)}}
+h1{background-size:200% auto;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% center}}
+.tick.done,.tick.late{animation:tickpop .45s ease}
+@keyframes tickpop{40%{transform:scale(1.35) rotate(-8deg)}}
+.btn{position:relative;overflow:hidden}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.tab:hover{transform:translateY(-1px)}
+.lock .ico{display:inline-block}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Task Notes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<div class="bubbles"><i style="left:6%;--s:30px;--d:15s;--l:0s"></i><i style="left:18%;--s:16px;--d:11s;--l:3s"></i><i style="left:32%;--s:42px;--d:19s;--l:6s"></i><i style="left:47%;--s:22px;--d:13s;--l:1s"></i><i style="left:60%;--s:34px;--d:17s;--l:8s"></i><i style="left:73%;--s:14px;--d:10s;--l:4s"></i><i style="left:85%;--s:26px;--d:16s;--l:2s"></i><i style="left:94%;--s:38px;--d:20s;--l:9s"></i></div>
+<div class="sea"><svg class="s1" viewBox="0 0 1440 90" preserveAspectRatio="none"><path d="M0 40Q90 10 180 40T360 40T540 40T720 40T900 40T1080 40T1260 40T1440 40V90H0Z"/></svg><svg class="s2" viewBox="0 0 1440 90" preserveAspectRatio="none"><path d="M0 50Q90 25 180 50T360 50T540 50T720 50T900 50T1080 50T1260 50T1440 50V90H0Z"/></svg></div>
+<div class="lock" id="lock">
+  <div class="ico">🔒</div>
+  <h1>My Task Notes</h1>
+  <div class="sub" id="lmsg"></div>
+  <input type="password" id="pw" placeholder="Password" autocomplete="off">
+  <input type="password" id="pw2" placeholder="Confirm password" autocomplete="off" style="display:none">
+  <button class="btn" id="lbtn" onclick="submitLock()">Unlock</button>
+  <div id="lerr"></div>
+  <button class="link" id="lforgot" onclick="forgot()">Forgot password?</button>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="row" style="justify-content:space-between"><h1>My Task Notes</h1><button class="tab" style="flex:none;padding:8px 14px" onclick="lockApp()">🔒 Lock</button></div>
+  <div class="sub" id="today"></div>
+
+  <div class="tabs">
+    <button class="tab on" id="t-active" onclick="setTab('active')">Tasks</button>
+    <button class="tab" id="t-hist" onclick="setTab('hist')">Monthly history</button>
+  </div>
+
+  <div id="v-active">
+    <div class="add">
+      <input type="text" id="inp" placeholder="What do you have to do?" maxlength="200">
+      <button class="btn" onclick="addTask()">Add</button>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div id="v-hist" style="display:none">
+    <div class="row"><input type="month" id="month"></div>
+    <div class="stats" id="stats"></div>
+    <div id="hlist"></div>
+  </div>
+</div>
+
+<script>
+var tasks=[],tab='active',DAY=86400000,KEY='task-notes-v1';
+var ENC='task-notes-enc',cKey=null,salt=null;
+function b64(a){var s='';new Uint8Array(a).forEach(function(b){s+=String.fromCharCode(b)});return btoa(s);}
+function unb64(s){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+async function derive(pw,sl){var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:sl,iterations:200000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+async function save(){if(!cKey)return;try{var iv=crypto.getRandomValues(new Uint8Array(12));var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},cKey,new TextEncoder().encode(JSON.stringify(tasks)));localStorage.setItem(ENC,JSON.stringify({s:b64(salt),i:b64(iv),d:b64(ct)}));}catch(e){}}
+function stored(){try{return localStorage.getItem(ENC);}catch(e){return null;}}
+function $(id){return document.getElementById(id);}
+function showLock(){var setup=!stored();$('app').style.display='none';$('lock').style.display='';$('pw').value='';$('pw2').value='';$('lerr').textContent='';
+  $('pw2').style.display=setup?'':'none';$('lforgot').style.display=setup?'none':'';
+  $('lmsg').textContent=setup?'Create a password to protect your tasks':'Enter your password to view your tasks';
+  $('lbtn').textContent=setup?'Set password':'Unlock';}
+function lockApp(){tasks=[];cKey=null;$('list').innerHTML='';$('hlist').innerHTML='';$('stats').innerHTML='';showLock();}
+function enter(){$('lock').style.display='none';$('app').style.display='';$('pw').value='';$('pw2').value='';render();}
+async function submitLock(){var pw=$('pw').value,err=$('lerr');err.textContent='';
+  if(!pw||pw.length<4){err.textContent='Use at least 4 characters.';return;}
+  var raw=stored();
+  try{
+    if(!raw){
+      if(pw!==$('pw2').value){err.textContent='Passwords do not match.';return;}
+      salt=crypto.getRandomValues(new Uint8Array(16));cKey=await derive(pw,salt);
+      try{var old=localStorage.getItem(KEY);tasks=old?JSON.parse(old):[];localStorage.removeItem(KEY);}catch(e){tasks=[];}
+      if(!Array.isArray(tasks))tasks=[];
+      await save();enter();
+    }else{
+      var o=JSON.parse(raw);salt=unb64(o.s);var k=await derive(pw,salt);
+      var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.i)},k,unb64(o.d));
+      tasks=JSON.parse(new TextDecoder().decode(pt));cKey=k;enter();
+    }
+  }catch(e){if(raw){tasks=[];cKey=null;enter();}else{err.textContent='Something went wrong. Try again.';}}
+}
+function forgot(){if(!confirm('Resetting will permanently delete ALL saved tasks and history. Continue?'))return;try{localStorage.removeItem(ENC);localStorage.removeItem(KEY);}catch(e){}tasks=[];cKey=null;showLock();}
+$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
+$('pw2').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
+function fmt(t){var d=new Date(t);return d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})+', '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});}
+function esc(s){return s.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]});}
+function status(t){if(t.done)return'done';return(Date.now()-t.created>=DAY)?'late':'pending';}
+function addTask(){var i=document.getElementById('inp'),v=i.value.trim();if(!v)return;
+  tasks.unshift({id:Date.now()+Math.random().toString(36).slice(2,6),text:v,created:Date.now(),done:false,doneAt:null});
+  i.value='';save();render();}
+function toggle(id){tasks.forEach(function(t){if(t.id===id){t.done=!t.done;t.doneAt=t.done?Date.now():null;}});save();render();}
+function del(id){if(!confirm('Delete this task?'))return;tasks=tasks.filter(function(t){return t.id!==id});save();render();}
+function card(t){var s=status(t),cls=s==='done'?'done':s==='late'?'late':'';
+  var badge=s==='done'?'<span class="badge b-done">Completed '+fmt(t.doneAt)+'</span>':s==='late'?'<span class="badge b-late">Overdue — not completed</span>':'Pending';
+  return '<div class="task '+(t.done?'done-t':'')+'"><button class="tick '+cls+'" onclick="toggle(\''+t.id+'\')" aria-label="Toggle done">'+(s==='pending'?'':'✓')+'</button>'
+   +'<div class="body"><div class="txt">'+esc(t.text)+'</div><div class="meta">Added '+fmt(t.created)+' · '+badge+'</div></div>'
+   +'<button class="del" onclick="del(\''+t.id+'\')" aria-label="Delete">×</button></div>';}
+function render(){
+  var l=document.getElementById('list');
+  l.innerHTML=tasks.length?tasks.map(card).join(''):'<div class="empty">No tasks yet. Add your first one above.</div>';
+  renderHist();
+}
+function renderHist(){
+  var m=document.getElementById('month').value;if(!m)return;
+  var arr=tasks.filter(function(t){var d=new Date(t.created);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m;});
+  var done=arr.filter(function(t){return t.done}).length,late=arr.filter(function(t){return status(t)==='late'}).length;
+  function ring(p,col,n,label){var C=163.36,off=C*(1-p/100);return '<div class="stat"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke-width="7" style="stroke:var(--line)"/><circle class="ring-p" cx="32" cy="32" r="26" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" transform="rotate(-90 32 32)" style="stroke:'+col+'"/><text x="32" y="37" text-anchor="middle" style="fill:var(--text);font-size:14px;font-weight:700">'+p+'%</text></svg><b style="color:'+col+'">'+n+'</b><span>'+label+'</span></div>';}
+  var tot=arr.length,pd=tot?Math.round(done/tot*100):0,pn=tot?100-pd:0;
+  function ring2(p,c1,c2,n,label,id){var C=182.21,off=C*(1-p/100);return '<div class="stat"><svg viewBox="0 0 72 72"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs><circle cx="36" cy="36" r="29" fill="none" stroke-width="8" style="stroke:var(--line);opacity:.6"/><circle class="ring-p" cx="36" cy="36" r="29" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" stroke-opacity="'+(p?1:0)+'" transform="rotate(-90 36 36)" stroke="url(#g'+id+')" style="filter:drop-shadow(0 0 3px '+c2+')"/><text x="36" y="41" text-anchor="middle" style="fill:'+c2+';font-size:15px;font-weight:700">'+p+'%</text></svg><b style="color:'+c2+'">'+n+'</b><span>'+label+'</span></div>';}
+  function pair(s){var h=Math.round(s*1.3);return['hsl('+Math.max(h-15,0)+',90%,60%)','hsl('+h+',85%,46%)'];}
+  function mix(f,t,k){return 'hsl('+Math.round(f[0]+(t[0]-f[0])*k)+','+Math.round(f[1]+(t[1]-f[1])*k)+'%,'+Math.round(f[2]+(t[2]-f[2])*k)+'%)';}
+  function ring3(p,f,t,n,label){var C=182.21,N=60,len=C/N,cnt=p/100*N,segs='',i;
+    for(i=0;i<cnt;i++){var l=Math.min(len,(cnt-i)*len),k=cnt>1?i/(cnt-1):1;
+      segs+='<circle cx="36" cy="36" r="29" fill="none" stroke-width="8" stroke="'+mix(f,t,k)+'" stroke-dasharray="'+(l+0.5)+' '+C+'" stroke-dashoffset="'+(-i*len)+'" transform="rotate(-90 36 36)"/>';}
+    var endC=mix(f,t,p?1:0),caps='';
+    if(p>0&&p<100){var th=(-90+p*3.6)*Math.PI/180;caps='<circle cx="36" cy="7" r="4" fill="'+mix(f,t,0)+'"/><circle cx="'+(36+29*Math.cos(th)).toFixed(2)+'" cy="'+(36+29*Math.sin(th)).toFixed(2)+'" r="4" fill="'+endC+'"/>';}
+    return '<div class="stat"><svg viewBox="0 0 72 72"><circle cx="36" cy="36" r="29" fill="none" stroke-width="8" style="stroke:var(--line);opacity:.6"/><g class="ring-p" style="filter:drop-shadow(0 0 3px '+endC+')">'+segs+caps+'</g><text x="36" y="41" text-anchor="middle" style="fill:'+endC+';font-size:15px;font-weight:700">'+p+'%</text></svg><b style="color:'+endC+'">'+n+'</b><span>'+label+'</span></div>';}
+  function ring4(p,f,t,n,label,id){var y=68-p/100*64,top=mix(f,t,0),bot=mix(f,t,1),W='M0 0Q9 -5 18 0T36 0T54 0T72 0T90 0T108 0T126 0T144 0V90H0Z';
+    return '<div class="stat"><svg viewBox="0 0 72 72"><defs><linearGradient id="w'+id+'" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="'+Math.max(68-y,2).toFixed(1)+'"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bot+'"/></linearGradient><clipPath id="c'+id+'"><circle cx="36" cy="36" r="31"/></clipPath></defs><circle cx="36" cy="36" r="31" stroke-width="2" style="fill:var(--card);stroke:var(--line)"/><g clip-path="url(#c'+id+')"'+(p?'':' style="display:none"')+'><g transform="translate(0,'+y.toFixed(1)+')"><path class="wv wv2" d="'+W+'" fill="'+top+'" opacity=".5" transform="translate(0,-2)"/><path class="wv" d="'+W+'" fill="url(#w'+id+')"/></g></g><circle cx="36" cy="36" r="31" fill="none" stroke-width="2.5" stroke="'+bot+'"/><text x="36" y="41" text-anchor="middle" style="fill:'+(p>=55?'#fff':bot)+';font-size:15px;font-weight:700'+(p>=55?';filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))':'')+'">'+p+'%</text></svg><b style="color:'+bot+'">'+n+'</b><span>'+label+'</span></div>';}
+  document.getElementById('stats').innerHTML=ring4(tot?100:0,[255,90,80],[320,75,50],tot,'Total','t')+ring4(pd,[140,60,72],[140,72,30],done,'Completed','c')+ring4(pn,[0,85,80],[0,75,40],tot-done,'Not completed','n');
+  document.getElementById('hlist').innerHTML=arr.length?arr.map(card).join(''):'<div class="empty">No tasks in this month.</div>';
+}
+function setTab(t){tab=t;document.getElementById('v-active').style.display=t==='active'?'':'none';document.getElementById('v-hist').style.display=t==='hist'?'':'none';
+  document.getElementById('t-active').className='tab'+(t==='active'?' on':'');document.getElementById('t-hist').className='tab'+(t==='hist'?' on':'');}
+document.getElementById('inp').addEventListener('keydown',function(e){if(e.key==='Enter')addTask();});
+document.getElementById('month').addEventListener('change',renderHist);
+var n=new Date();document.getElementById('month').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+document.getElementById('today').textContent=n.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+showLock();
+setInterval(function(){if(cKey)render();},60000);
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+</body>
+</html>
