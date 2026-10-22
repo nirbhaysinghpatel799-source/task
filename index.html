@@ -140,6 +140,7 @@ select,input[type=datetime-local],input[type=search]{padding:10px 12px;border:1p
 <meta name="apple-mobile-web-app-title" content="Task Notes">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
+<script src="firebase-config.js"></script>
 </head>
 <body>
 <div class="bubbles"><i style="left:6%;--s:30px;--d:15s;--l:0s"></i><i style="left:18%;--s:16px;--d:11s;--l:3s"></i><i style="left:32%;--s:42px;--d:19s;--l:6s"></i><i style="left:47%;--s:22px;--d:13s;--l:1s"></i><i style="left:60%;--s:34px;--d:17s;--l:8s"></i><i style="left:73%;--s:14px;--d:10s;--l:4s"></i><i style="left:85%;--s:26px;--d:16s;--l:2s"></i><i style="left:94%;--s:38px;--d:20s;--l:9s"></i></div>
@@ -148,11 +149,15 @@ select,input[type=datetime-local],input[type=search]{padding:10px 12px;border:1p
   <div class="ico">🔒</div>
   <h1>My Task Notes</h1>
   <div class="sub" id="lmsg"></div>
+  <button class="btn alt" id="bbtn" style="display:none;margin-bottom:10px" onclick="unlockBio()">👆 Unlock with fingerprint</button>
   <input type="password" id="pw" placeholder="Password" autocomplete="off">
   <input type="password" id="pw2" placeholder="Confirm password" autocomplete="off" style="display:none">
   <button class="btn" id="lbtn" onclick="submitLock()">Unlock</button>
+  <div id="pinbox" style="display:none"><input type="password" id="qpin" inputmode="numeric" pattern="[0-9]*" placeholder="Quick PIN" autocomplete="off" maxlength="8"><button class="btn" onclick="unlockPin()">Unlock with PIN</button></div>
   <div id="lerr"></div>
+  <button class="link" id="tpin" style="display:none;margin-top:6px" onclick="pinMode=!pinMode;lockMode()">Use quick PIN instead</button>
   <button class="link" id="lforgot" onclick="showRecover()">Forgot password?</button>
+  <button class="link" id="clog" style="display:none;margin-top:6px" onclick="cloudSignIn()">☁️ Sign in with Google to load my synced tasks</button>
 </div>
 
 <div class="lock" id="rec" style="display:none">
@@ -215,6 +220,16 @@ select,input[type=datetime-local],input[type=search]{padding:10px 12px;border:1p
       <button class="btn alt" onclick="exportData()">Export backup</button>
       <button class="btn alt" onclick="$('imp').click()">Import backup</button>
       <input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importData(this)"></div>
+    <div class="panel"><h3>☁️ Cloud sync</h3><p>Sign in with Google to see the same tasks and settings on all your devices. Your tasks stay encrypted with your password, so the cloud cannot read them. Use the same password on every device.</p>
+      <button class="btn" id="cin" onclick="cloudSignIn()">Sign in with Google</button>
+      <button class="btn alt" id="csync" style="display:none" onclick="syncNow()">Sync now</button>
+      <button class="btn alt" id="cout" style="display:none" onclick="cloudSignOut()">Sign out</button><div class="meta" id="cst"></div></div>
+    <div class="panel"><h3>👆 Quick unlock</h3><p>Open the app with your fingerprint or a short numeric PIN instead of typing the password. Set this up on each device you use. A PIN is easier to guess than a long password, so keep a strong password too.</p>
+      <button class="btn" onclick="enableBio()">Enable fingerprint</button>
+      <input type="password" id="qp1" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="New PIN (4 to 8 digits)" autocomplete="off">
+      <input type="password" id="qp2" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Confirm PIN" autocomplete="off">
+      <button class="btn" onclick="setPin()">Set PIN</button>
+      <button class="btn alt" onclick="quickOff()">Turn off</button><div class="meta" id="qst"></div></div>
     <div class="panel"><h3>🔑 Security</h3><p>Change your password, or create a new recovery key (the old key stops working).</p>
       <input type="password" id="cp1" placeholder="New password" autocomplete="off">
       <input type="password" id="cp2" placeholder="Confirm new password" autocomplete="off">
@@ -239,17 +254,17 @@ async function adec(key,o){return new Uint8Array(await crypto.subtle.decrypt({na
 function impDek(r){return crypto.subtle.importKey('raw',r,'AES-GCM',false,['encrypt','decrypt']);}
 function norm(s){return s.toUpperCase().replace(/[^A-Z0-9]/g,'');}
 function genRK(){var A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',b=crypto.getRandomValues(new Uint8Array(20)),s='';for(var i=0;i<20;i++){s+=A[b[i]%32];if(i%4===3&&i<19)s+='-';}return s;}
-async function persist(){if(!dek||decoy)return;try{var o=await aenc(dek,new TextEncoder().encode(JSON.stringify(tasks)));localStorage.setItem(ENC2,JSON.stringify({v:2,ps:vault.ps,pw:vault.pw,rs:vault.rs,rc:vault.rc,i:o.i,d:o.d}));}catch(e){}}
+async function persist(){if(!dek||decoy)return;try{var o=await aenc(dek,new TextEncoder().encode(JSON.stringify(tasks)));var ex={};try{ex=JSON.parse(localStorage.getItem(ENC2))||{};}catch(e){}if(!vault.vid)vault.vid=ex.vid||b64(crypto.getRandomValues(new Uint8Array(9)));localStorage.setItem(ENC2,JSON.stringify({v:2,vid:vault.vid,t:Date.now(),ps:vault.ps,pw:vault.pw,rs:vault.rs,rc:vault.rc,i:o.i,d:o.d}));pushCloud();}catch(e){}}
 function save(){persist();}
 async function wrapPw(pw){var sl=crypto.getRandomValues(new Uint8Array(16));vault.ps=b64(sl);vault.pw=await aenc(await derive(pw,sl),raw);}
 async function newRK(){var rk=genRK(),sl=crypto.getRandomValues(new Uint8Array(16));vault.rs=b64(sl);vault.rc=await aenc(await derive(norm(rk),sl),raw);return rk;}
-async function createVault(pw,list){raw=crypto.getRandomValues(new Uint8Array(32));dek=await impDek(raw);vault={};tasks=list;await wrapPw(pw);var rk=await newRK();await persist();return rk;}
+async function createVault(pw,list){try{localStorage.removeItem('tn-quick');}catch(e){}raw=crypto.getRandomValues(new Uint8Array(32));dek=await impDek(raw);vault={vid:b64(crypto.getRandomValues(new Uint8Array(9)))};tasks=list;await wrapPw(pw);var rk=await newRK();await persist();return rk;}
 function hideAll(){['lock','rec','rk','app'].forEach(function(i){$(i).style.display='none';});}
 function showLock(){var setup=!ls(ENC2)&&!ls(ENC);hideAll();$('lock').style.display='';$('pw').value='';$('pw2').value='';$('lerr').textContent='';
   $('pw2').style.display=setup?'':'none';$('lforgot').style.display=setup?'none':'';
-  $('lmsg').textContent=setup?'Create a password to protect your tasks':'Enter your password to view your tasks';$('lbtn').textContent=setup?'Set password':'Unlock';}
+  $('lmsg').textContent=setup?'Create a password to protect your tasks':'Enter your password to view your tasks';$('lbtn').textContent=setup?'Set password':'Unlock';pinMode=false;lockMode();}
 function lockApp(){tasks=[];dek=null;raw=null;vault=null;decoy=false;$('list').innerHTML='';$('hlist').innerHTML='';$('stats').innerHTML='';setTab('active');showLock();}
-function enter(){hideAll();$('app').style.display='';$('t-more').style.display=decoy?'none':'';$('pw').value='';$('pw2').value='';last=Date.now();sig='';render();}
+function enter(){hideAll();$('app').style.display='';document.querySelectorAll('#v-more .panel').forEach(function(p,i){p.style.display=(decoy&&i>1)?'none':'';});$('pw').value='';$('pw2').value='';last=Date.now();sig='';render();}
 function goDecoy(){raw=null;dek=null;vault=null;tasks=[];decoy=true;enter();}
 async function submitLock(){var pw=$('pw').value,err=$('lerr');err.textContent='';decoy=false;
   if(!pw||pw.length<4){err.textContent='Use at least 4 characters.';return;}
@@ -332,9 +347,83 @@ function renderHist(){var m=$('month').value;if(!m)return;
 function setTab(t){['active','hist','more'].forEach(function(x){$('v-'+x).style.display=x===t?'':'none';$('t-'+x).className='tab'+(x===t?' on':'');});}
 function getSet(){try{return JSON.parse(localStorage.getItem(SET))||{};}catch(e){return{};}}
 function putSet(o){try{localStorage.setItem(SET,JSON.stringify(o));}catch(e){}}
-function setAuto(v){var s=getSet();s.auto=+v;putSet(s);}
+function setAuto(v){var s=getSet();s.auto=+v;s.st=Date.now();putSet(s);pushCloud();}
+var pinMode=false,pinFails=0;
+function getQ(){try{return JSON.parse(localStorage.getItem('tn-quick'))||{};}catch(e){return{};}}
+function putQ(o){try{localStorage.setItem('tn-quick',JSON.stringify(o));}catch(e){}}
+function idb(){return new Promise(function(res,rej){var r=indexedDB.open('tn-keys',1);r.onupgradeneeded=function(){r.result.createObjectStore('k');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};});}
+function idbPut(k,v){return idb().then(function(db){return new Promise(function(res,rej){var t=db.transaction('k','readwrite');t.objectStore('k').put(v,k);t.oncomplete=res;t.onerror=function(){rej(t.error);};});});}
+function idbGet(k){return idb().then(function(db){return new Promise(function(res,rej){var r=db.transaction('k').objectStore('k').get(k);r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};});});}
+function idbDel(k){return idb().then(function(db){return new Promise(function(res,rej){var t=db.transaction('k','readwrite');t.objectStore('k').delete(k);t.oncomplete=res;t.onerror=function(){rej(t.error);};});});}
+function lockMode(){var q=getQ(),has=!!ls(ENC2);
+  $('bbtn').style.display=(has&&q.bio&&window.PublicKeyCredential)?'':'none';
+  $('tpin').style.display=(has&&q.pin)?'':'none';
+  var p=pinMode&&has&&q.pin;
+  $('pw').style.display=p?'none':'';$('lbtn').style.display=p?'none':'';$('pinbox').style.display=p?'':'none';
+  $('tpin').textContent=p?'Use password instead':'Use quick PIN instead';}
+async function openWith(r){var st=JSON.parse(ls(ENC2));raw=r;dek=await impDek(raw);tasks=JSON.parse(new TextDecoder().decode(await adec(dek,{i:st.i,d:st.d})));vault={ps:st.ps,pw:st.pw,rs:st.rs,rc:st.rc};decoy=false;enter();}
+async function unlockPin(){var pin=$('qpin').value,err=$('lerr'),q=getQ();err.textContent='';
+  if(!/^\d{4,8}$/.test(pin)||!q.pin||!ls(ENC2)){err.textContent='Enter your numeric PIN.';return;}
+  await sleep(Math.min(pinFails*1000,8000));
+  try{var k=await derive(pin,unb64(q.pin.s));var r=await adec(k,q.pin);pinFails=0;$('qpin').value='';await openWith(r);}catch(e){pinFails++;$('qpin').value='';goDecoy();}}
+async function unlockBio(){var q=getQ(),err=$('lerr');err.textContent='';
+  try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:unb64(q.bio.cid)}],userVerification:'required',timeout:60000}});
+    var dk=await idbGet('dev');var r=await adec(dk,q.bio);await openWith(r);
+  }catch(e){err.textContent='Fingerprint did not work. Use your password.';}}
+async function setPin(){if(!dek)return;var a=$('qp1').value,b=$('qp2').value;
+  if(!/^\d{4,8}$/.test(a)){alert('PIN must be 4 to 8 digits.');return;}if(a!==b){alert('PINs do not match.');return;}
+  var sl=crypto.getRandomValues(new Uint8Array(16)),k=await derive(a,sl),w=await aenc(k,raw),q=getQ();q.pin={s:b64(sl),i:w.i,d:w.d};putQ(q);$('qp1').value='';$('qp2').value='';refreshQ();alert('Quick PIN is on.');}
+async function enableBio(){if(!dek)return;
+  var okp=false;try{okp=!!window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){}
+  if(!okp){alert('Fingerprint unlock is not available here. Make sure your phone has a fingerprint or screen lock set up, and open the app from its https link.');return;}
+  try{var c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'My Task Notes'},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'task-notes',displayName:'Task Notes'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000}});
+    var dk=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await idbPut('dev',dk);var w=await aenc(dk,raw),q=getQ();q.bio={cid:b64(c.rawId),i:w.i,d:w.d};putQ(q);refreshQ();alert('Fingerprint unlock is on.');
+  }catch(e){alert('Could not turn on fingerprint unlock.');}}
+function quickOff(){if(!confirm('Turn off quick unlock (fingerprint and PIN)?'))return;try{localStorage.removeItem('tn-quick');}catch(e){}idbDel('dev').catch(function(){});refreshQ();}
+function refreshQ(){var q=getQ();$('qst').textContent='Fingerprint: '+(q.bio?'on':'off')+' · PIN: '+(q.pin?'on':'off');}
+var fb=null,fbUser=null,pushT=null,syncing=false,lastSync=0,syncMsg='',noSync=false;
+function cloudOn(){return !!window.FIREBASE_CONFIG;}
+function loadScript(u){return new Promise(function(res,rej){var s=document.createElement('script');s.src=u;s.onload=res;s.onerror=function(){rej(new Error('load'));};document.head.appendChild(s);});}
+function ensureVid(){try{var v=localStorage.getItem(ENC2);if(!v)return;var o=JSON.parse(v);if(!o.vid){o.vid=b64(crypto.getRandomValues(new Uint8Array(9)));localStorage.setItem(ENC2,JSON.stringify(o));if(vault)vault.vid=o.vid;}}catch(e){}}
+function updCloudUI(){var on=cloudOn()&&!!fb;
+  $('clog').style.display=(on&&!fbUser)?'':'none';
+  $('cin').style.display=fbUser?'none':'';$('csync').style.display=fbUser?'':'none';$('cout').style.display=fbUser?'':'none';
+  $('cst').textContent=!cloudOn()?'Cloud sync is not set up yet. See SYNC-SETUP.md.':!fb?'Cloud sync could not load. Check your internet.':fbUser?'Signed in as '+fbUser.email+(syncMsg?' · '+syncMsg:''):'Not signed in.';}
+async function initCloud(){if(!cloudOn()){updCloudUI();return;}
+  try{var B='https://www.gstatic.com/firebasejs/10.12.0/';
+    await loadScript(B+'firebase-app-compat.js');await loadScript(B+'firebase-auth-compat.js');await loadScript(B+'firebase-firestore-compat.js');
+    firebase.initializeApp(window.FIREBASE_CONFIG);fb={auth:firebase.auth(),db:firebase.firestore()};
+    fb.auth.onAuthStateChanged(function(u){fbUser=u;updCloudUI();if(u)syncNow();});
+  }catch(e){fb=null;}
+  updCloudUI();}
+async function cloudSignIn(){if(!fb){alert('Cloud sync is not set up yet or could not load. See SYNC-SETUP.md.');return;}
+  var p=new firebase.auth.GoogleAuthProvider();
+  try{await fb.auth.signInWithPopup(p);}catch(e){try{await fb.auth.signInWithRedirect(p);}catch(e2){alert('Sign-in failed.');}}}
+function cloudSignOut(){if(fb)fb.auth.signOut();noSync=false;}
+function pushCloud(){if(!fb||!fbUser||noSync)return;clearTimeout(pushT);
+  pushT=setTimeout(async function(){try{ensureVid();var v=ls(ENC2);if(!v)return;var s=getSet();
+    await fb.db.collection('users').doc(fbUser.uid).set({v:v,s:{theme:s.theme||'auto',auto:s.auto===undefined?5:s.auto},st:s.st||0,u:Date.now()},{merge:true});}catch(e){}},1200);}
+async function applyCloud(vs){try{localStorage.setItem(ENC2,vs);}catch(e){}
+  if(dek&&!decoy){try{var st=JSON.parse(vs);tasks=JSON.parse(new TextDecoder().decode(await adec(dek,{i:st.i,d:st.d})));vault={ps:st.ps,pw:st.pw,rs:st.rs,rc:st.rc};render();}catch(e){lockApp();}}
+  else if($('lock').style.display!=='none')showLock();}
+async function syncNow(){if(!fb||!fbUser||syncing||noSync)return;syncing=true;lastSync=Date.now();
+  try{ensureVid();
+    var snap=await fb.db.collection('users').doc(fbUser.uid).get(),c=snap.exists?snap.data():null,lv=ls(ENC2),has=!!lv||!!ls(ENC);
+    if(c&&c.v){var C=JSON.parse(c.v);
+      if(!has){await applyCloud(c.v);}
+      else if(!lv){if(confirm('This Google account already has tasks saved from another device. Use them on this device? Tasks stored on this device will be replaced. Cancel keeps this device as it is.')){try{localStorage.removeItem(ENC);}catch(e){}await applyCloud(c.v);}else noSync=true;}
+      else{var L=JSON.parse(lv);
+        if((L.vid||'')!==(C.vid||'')){if(confirm('This Google account already has tasks saved from another device. Use them on this device? Tasks stored on this device will be replaced (export a backup first if you need them). Cancel keeps this device as it is.')){try{localStorage.removeItem('tn-quick');}catch(e){}if(dek)lockApp();await applyCloud(c.v);}else noSync=true;}
+        else if((C.t||0)>(L.t||0))await applyCloud(c.v);
+        else if((L.t||0)>(C.t||0))pushCloud();
+      }
+    }else if(ls(ENC2))pushCloud();
+    var s=getSet();if(c&&c.st&&c.s&&c.st>(s.st||0)){s.theme=c.s.theme;s.auto=c.s.auto;s.st=c.st;putSet(s);applyTheme(s.theme||'auto');$('theme').value=s.theme||'auto';$('auto').value=String(s.auto===undefined?5:s.auto);}
+    syncMsg='Last synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }catch(e){syncMsg='Sync failed. Check internet and setup.';}
+  syncing=false;updCloudUI();}
 function applyTheme(m){var r=document.documentElement;if(m==='light'||m==='dark')r.setAttribute('data-theme',m);else r.removeAttribute('data-theme');}
-function setTheme(m){var s=getSet();s.theme=m;putSet(s);applyTheme(m);}
+function setTheme(m){var s=getSet();s.theme=m;s.st=Date.now();putSet(s);applyTheme(m);pushCloud();}
 function enableNotif(){if(!window.Notification){alert('Notifications are not supported on this device.');return;}
   Notification.requestPermission().then(function(p){var s=getSet();s.notif=p==='granted';putSet(s);$('nst').textContent=p==='granted'?'Notifications are on.':'Permission was not granted.';});}
 function exportData(){if(!dek)return;download('task-notes-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'task-notes',exported:new Date().toISOString(),tasks:tasks},null,2),'application/json');}
@@ -344,15 +433,17 @@ function importData(inp){var f=inp.files[0];if(!f||!dek)return;var r=new FileRea
 async function changePw(){var a=$('cp1').value,b=$('cp2').value;if(!dek)return;if(a.length<4){alert('Use at least 4 characters.');return;}if(a!==b){alert('Passwords do not match.');return;}
   await wrapPw(a);await persist();$('cp1').value='';$('cp2').value='';alert('Password changed.');}
 async function newRecovery(){if(!dek)return;if(!confirm('This replaces your old recovery key. Continue?'))return;var rk=await newRK();await persist();showRK(rk);}
-function eraseAll(){if(!dek)return;if(prompt('This deletes ALL tasks and the password. Type DELETE to confirm.')!=='DELETE')return;
-  try{localStorage.removeItem(ENC2);localStorage.removeItem(ENC);localStorage.removeItem(KEY);}catch(e){}lockApp();}
+async function eraseAll(){if(!dek)return;if(prompt('This deletes ALL tasks and the password. Type DELETE to confirm.')!=='DELETE')return;
+  if(fbUser&&fb&&confirm('Also erase the synced copy in your Google account? Cancel keeps it, and it comes back the next time you sync.')){try{await fb.db.collection('users').doc(fbUser.uid).delete();}catch(e){}}
+  try{localStorage.removeItem(ENC2);localStorage.removeItem(ENC);localStorage.removeItem(KEY);localStorage.removeItem('tn-quick');}catch(e){}lockApp();}
 function tick(){var s=getSet(),a=s.auto===undefined?5:s.auto;
+  if(fbUser&&Date.now()-lastSync>60000)syncNow();
   if((dek||decoy)&&a>0&&Date.now()-last>a*60000){lockApp();return;}
   if(!dek)return;
   if(s.notif&&window.Notification&&Notification.permission==='granted'){var ch=false;tasks.forEach(function(t){if(t.due&&!t.done&&!t.n&&Date.now()>=t.due){t.n=1;ch=true;try{new Notification('Task due',{body:t.text});}catch(e){}}});if(ch)save();}
   if(tasks.map(status).join('')!==sig)render();}
 ['pointerdown','keydown','touchstart'].forEach(function(e){document.addEventListener(e,function(){last=Date.now();},{passive:true});});
-document.addEventListener('visibilitychange',function(){if(!document.hidden)tick();});
+document.addEventListener('visibilitychange',function(){if(!document.hidden){tick();syncNow();}});
 $('pw').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
 $('pw2').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
 $('np2').addEventListener('keydown',function(e){if(e.key==='Enter')doRecover();});
@@ -362,7 +453,8 @@ $('month').addEventListener('change',renderHist);
 var n=new Date();$('month').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
 $('today').textContent=n.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 var s0=getSet();applyTheme(s0.theme||'auto');$('theme').value=s0.theme||'auto';$('auto').value=String(s0.auto===undefined?5:s0.auto);if(s0.notif)$('nst').textContent='Notifications are on.';
-showLock();setInterval(tick,30000);
+refreshQ();showLock();updCloudUI();initCloud();setInterval(tick,30000);
+$('qpin').addEventListener('keydown',function(e){if(e.key==='Enter')unlockPin();});
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>

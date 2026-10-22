@@ -1,2 +1,2 @@
 # My Task Notes
-A password-protected to-do app (PWA). Deploy with GitHub Pages and install on your phone.
+Password-protected to-do app (PWA) with optional Google cloud sync. See SYNC-SETUP.md.
