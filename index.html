@@ -108,6 +108,31 @@ h1{background-size:200% auto;animation:shine 6s linear infinite}
 .btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .tab:hover{transform:translateY(-1px)}
 .lock .ico{display:inline-block}
+.opts{display:flex;gap:8px;margin:-6px 0 14px;flex-wrap:wrap}
+.mini{flex:1;min-width:140px;font-size:11px;color:var(--muted);font-weight:600;display:flex;flex-direction:column;gap:3px}
+select,input[type=datetime-local],input[type=search]{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font:inherit;font-size:14px;width:100%}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0 14px;padding-bottom:2px}
+.chip{flex:none;padding:7px 13px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;font-size:13px;font-weight:600;transition:.2s}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pri{font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;color:#fff;margin-right:4px;vertical-align:middle}
+.p-high{background:var(--red)}.p-med{background:#f59e0b}.p-low{background:#38bdf8}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.panel h3{margin:0 0 6px;font-size:15px}
+.panel p{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.panel .btn{padding:10px 14px;font-size:14px;margin:2px 4px 2px 0}
+.panel input[type=password]{width:100%;margin:4px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);font-size:15px}
+.btn.alt{background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:none}
+.btn.danger{background:var(--red);box-shadow:none}
+.rkbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17px;font-weight:700;letter-spacing:1px;padding:14px;border:2px dashed var(--accent);border-radius:14px;margin:12px 0;word-break:break-all;user-select:all}
+.lock .chk{display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:13px;margin:12px 0 4px}
+.lock .chk input{width:auto;margin-top:3px}
+.lock .btn:disabled{opacity:.45}
+.lock .btn.alt{margin-top:6px}
+#lerr,#rerr{color:var(--red);min-height:20px;font-size:14px;margin-top:8px}
+.edt{border:0;background:none;color:var(--muted);font-size:17px;padding:4px 6px}
+.edt:hover{color:var(--accent)}
+.stat{padding:14px 6px}
+.stat b{font-size:20px}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4f46e5">
@@ -127,23 +152,49 @@ h1{background-size:200% auto;animation:shine 6s linear infinite}
   <input type="password" id="pw2" placeholder="Confirm password" autocomplete="off" style="display:none">
   <button class="btn" id="lbtn" onclick="submitLock()">Unlock</button>
   <div id="lerr"></div>
-  <button class="link" id="lforgot" onclick="forgot()">Forgot password?</button>
+  <button class="link" id="lforgot" onclick="showRecover()">Forgot password?</button>
+</div>
+
+<div class="lock" id="rec" style="display:none">
+  <div class="ico">🔑</div>
+  <h1>Recover access</h1>
+  <div class="sub">Enter your recovery key and choose a new password. Your tasks stay safe.</div>
+  <input type="text" id="rk1" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters">
+  <input type="password" id="np1" placeholder="New password" autocomplete="off">
+  <input type="password" id="np2" placeholder="Confirm new password" autocomplete="off">
+  <button class="btn" id="rbtn" onclick="doRecover()">Reset password</button>
+  <div id="rerr"></div>
+  <button class="link" onclick="showLock()">Back</button>
+</div>
+
+<div class="lock" id="rk" style="display:none">
+  <div class="ico">🗝️</div>
+  <h1>Save your recovery key</h1>
+  <div class="sub">If you forget your password, this key is the only way to get your tasks back. It is shown only once. Keep it somewhere safe, not only on this device.</div>
+  <div class="rkbox" id="rkv"></div>
+  <button class="btn alt" onclick="copyRK()">Copy</button>
+  <button class="btn alt" onclick="dlRK()">Download as file</button>
+  <label class="chk"><input type="checkbox" id="rkok" onchange="$('rkgo').disabled=!this.checked"><span>I have saved my recovery key</span></label>
+  <button class="btn" id="rkgo" disabled onclick="goRK()">Continue</button>
 </div>
 
 <div class="wrap" id="app" style="display:none">
   <div class="row" style="justify-content:space-between"><h1>My Task Notes</h1><button class="tab" style="flex:none;padding:8px 14px" onclick="lockApp()">🔒 Lock</button></div>
   <div class="sub" id="today"></div>
-
   <div class="tabs">
     <button class="tab on" id="t-active" onclick="setTab('active')">Tasks</button>
-    <button class="tab" id="t-hist" onclick="setTab('hist')">Monthly history</button>
+    <button class="tab" id="t-hist" onclick="setTab('hist')">History</button>
+    <button class="tab" id="t-more" onclick="setTab('more')">More</button>
   </div>
 
   <div id="v-active">
-    <div class="add">
-      <input type="text" id="inp" placeholder="What do you have to do?" maxlength="200">
-      <button class="btn" onclick="addTask()">Add</button>
+    <div class="add"><input type="text" id="inp" placeholder="What do you have to do?" maxlength="200"><button class="btn" onclick="addTask()">Add</button></div>
+    <div class="opts">
+      <label class="mini">Due date &amp; time (optional)<input type="datetime-local" id="due"></label>
+      <label class="mini">Priority<select id="pri"><option value="low">Low</option><option value="med" selected>Medium</option><option value="high">High</option></select></label>
     </div>
+    <input type="search" id="srch" placeholder="Search tasks…">
+    <div class="chips" id="chips"></div>
     <div id="list"></div>
   </div>
 
@@ -152,89 +203,166 @@ h1{background-size:200% auto;animation:shine 6s linear infinite}
     <div class="stats" id="stats"></div>
     <div id="hlist"></div>
   </div>
+
+  <div id="v-more" style="display:none">
+    <div class="panel"><h3>🌗 Appearance</h3><p>Choose light or dark mode, or follow your device setting.</p>
+      <select id="theme" onchange="setTheme(this.value)"><option value="auto">Auto (device)</option><option value="light">Light mode</option><option value="dark">Dark mode</option></select></div>
+    <div class="panel"><h3>⏱ Auto-lock</h3><p>Lock the app automatically when you are not using it.</p>
+      <select id="auto" onchange="setAuto(this.value)"><option value="0">Off</option><option value="1">After 1 minute</option><option value="5">After 5 minutes</option><option value="15">After 15 minutes</option></select></div>
+    <div class="panel"><h3>🔔 Reminders</h3><p>Get a notification when a task reaches its due time (works while the app is open).</p>
+      <button class="btn alt" onclick="enableNotif()">Enable notifications</button><div class="meta" id="nst"></div></div>
+    <div class="panel"><h3>💾 Backup</h3><p>Download all tasks as a file, or restore from one. The backup file is not password protected, so keep it private.</p>
+      <button class="btn alt" onclick="exportData()">Export backup</button>
+      <button class="btn alt" onclick="$('imp').click()">Import backup</button>
+      <input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importData(this)"></div>
+    <div class="panel"><h3>🔑 Security</h3><p>Change your password, or create a new recovery key (the old key stops working).</p>
+      <input type="password" id="cp1" placeholder="New password" autocomplete="off">
+      <input type="password" id="cp2" placeholder="Confirm new password" autocomplete="off">
+      <button class="btn" onclick="changePw()">Change password</button>
+      <button class="btn alt" onclick="newRecovery()">New recovery key</button></div>
+    <div class="panel"><h3>⚠️ Erase everything</h3><p>Permanently deletes all tasks and the password on this device.</p>
+      <button class="btn danger" onclick="eraseAll()">Erase all data</button></div>
+  </div>
 </div>
 
 <script>
-var tasks=[],tab='active',DAY=86400000,KEY='task-notes-v1';
-var ENC='task-notes-enc',cKey=null,salt=null;
+var tasks=[],KEY='task-notes-v1',ENC='task-notes-enc',ENC2='task-notes-enc2',SET='tn-settings';
+var dek=null,raw=null,vault=null,decoy=false,fails=0,DAY=86400000,flt='all',q='',sig='',last=Date.now(),curRK='';
+function $(id){return document.getElementById(id);}
+function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function b64(a){var s='';new Uint8Array(a).forEach(function(b){s+=String.fromCharCode(b)});return btoa(s);}
 function unb64(s){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
-async function derive(pw,sl){var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:sl,iterations:200000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
-async function save(){if(!cKey)return;try{var iv=crypto.getRandomValues(new Uint8Array(12));var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},cKey,new TextEncoder().encode(JSON.stringify(tasks)));localStorage.setItem(ENC,JSON.stringify({s:b64(salt),i:b64(iv),d:b64(ct)}));}catch(e){}}
-function stored(){try{return localStorage.getItem(ENC);}catch(e){return null;}}
-function $(id){return document.getElementById(id);}
-function showLock(){var setup=!stored();$('app').style.display='none';$('lock').style.display='';$('pw').value='';$('pw2').value='';$('lerr').textContent='';
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)});}
+async function derive(sec,sl){var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(sec),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:sl,iterations:200000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+async function aenc(key,bytes){var iv=crypto.getRandomValues(new Uint8Array(12));var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,bytes);return{i:b64(iv),d:b64(ct)};}
+async function adec(key,o){return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.i)},key,unb64(o.d)));}
+function impDek(r){return crypto.subtle.importKey('raw',r,'AES-GCM',false,['encrypt','decrypt']);}
+function norm(s){return s.toUpperCase().replace(/[^A-Z0-9]/g,'');}
+function genRK(){var A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',b=crypto.getRandomValues(new Uint8Array(20)),s='';for(var i=0;i<20;i++){s+=A[b[i]%32];if(i%4===3&&i<19)s+='-';}return s;}
+async function persist(){if(!dek||decoy)return;try{var o=await aenc(dek,new TextEncoder().encode(JSON.stringify(tasks)));localStorage.setItem(ENC2,JSON.stringify({v:2,ps:vault.ps,pw:vault.pw,rs:vault.rs,rc:vault.rc,i:o.i,d:o.d}));}catch(e){}}
+function save(){persist();}
+async function wrapPw(pw){var sl=crypto.getRandomValues(new Uint8Array(16));vault.ps=b64(sl);vault.pw=await aenc(await derive(pw,sl),raw);}
+async function newRK(){var rk=genRK(),sl=crypto.getRandomValues(new Uint8Array(16));vault.rs=b64(sl);vault.rc=await aenc(await derive(norm(rk),sl),raw);return rk;}
+async function createVault(pw,list){raw=crypto.getRandomValues(new Uint8Array(32));dek=await impDek(raw);vault={};tasks=list;await wrapPw(pw);var rk=await newRK();await persist();return rk;}
+function hideAll(){['lock','rec','rk','app'].forEach(function(i){$(i).style.display='none';});}
+function showLock(){var setup=!ls(ENC2)&&!ls(ENC);hideAll();$('lock').style.display='';$('pw').value='';$('pw2').value='';$('lerr').textContent='';
   $('pw2').style.display=setup?'':'none';$('lforgot').style.display=setup?'none':'';
-  $('lmsg').textContent=setup?'Create a password to protect your tasks':'Enter your password to view your tasks';
-  $('lbtn').textContent=setup?'Set password':'Unlock';}
-function lockApp(){tasks=[];cKey=null;$('list').innerHTML='';$('hlist').innerHTML='';$('stats').innerHTML='';showLock();}
-function enter(){$('lock').style.display='none';$('app').style.display='';$('pw').value='';$('pw2').value='';render();}
-async function submitLock(){var pw=$('pw').value,err=$('lerr');err.textContent='';
+  $('lmsg').textContent=setup?'Create a password to protect your tasks':'Enter your password to view your tasks';$('lbtn').textContent=setup?'Set password':'Unlock';}
+function lockApp(){tasks=[];dek=null;raw=null;vault=null;decoy=false;$('list').innerHTML='';$('hlist').innerHTML='';$('stats').innerHTML='';setTab('active');showLock();}
+function enter(){hideAll();$('app').style.display='';$('t-more').style.display=decoy?'none':'';$('pw').value='';$('pw2').value='';last=Date.now();sig='';render();}
+function goDecoy(){raw=null;dek=null;vault=null;tasks=[];decoy=true;enter();}
+async function submitLock(){var pw=$('pw').value,err=$('lerr');err.textContent='';decoy=false;
   if(!pw||pw.length<4){err.textContent='Use at least 4 characters.';return;}
-  var raw=stored();
+  var s2=ls(ENC2),s1=ls(ENC);$('lbtn').disabled=true;
   try{
-    if(!raw){
+    if(!s2&&!s1){
       if(pw!==$('pw2').value){err.textContent='Passwords do not match.';return;}
-      salt=crypto.getRandomValues(new Uint8Array(16));cKey=await derive(pw,salt);
-      try{var old=localStorage.getItem(KEY);tasks=old?JSON.parse(old):[];localStorage.removeItem(KEY);}catch(e){tasks=[];}
-      if(!Array.isArray(tasks))tasks=[];
-      await save();enter();
+      var old=[];try{var o=localStorage.getItem(KEY);old=o?JSON.parse(o):[];localStorage.removeItem(KEY);}catch(e){}
+      if(!Array.isArray(old))old=[];
+      showRK(await createVault(pw,old));
+    }else if(s2){
+      var st=JSON.parse(s2),ok=false;
+      try{raw=await adec(await derive(pw,unb64(st.ps)),st.pw);dek=await impDek(raw);tasks=JSON.parse(new TextDecoder().decode(await adec(dek,{i:st.i,d:st.d})));vault={ps:st.ps,pw:st.pw,rs:st.rs,rc:st.rc};ok=true;}catch(e){}
+      if(ok)enter();else goDecoy();
     }else{
-      var o=JSON.parse(raw);salt=unb64(o.s);var k=await derive(pw,salt);
-      var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.i)},k,unb64(o.d));
-      tasks=JSON.parse(new TextDecoder().decode(pt));cKey=k;enter();
+      var o1=JSON.parse(s1),list=null;
+      try{var k=await derive(pw,unb64(o1.s));list=JSON.parse(new TextDecoder().decode(await adec(k,{i:o1.i,d:o1.d})));}catch(e){}
+      if(list){var rk=await createVault(pw,list);try{localStorage.removeItem(ENC);}catch(e){}showRK(rk);}else goDecoy();
     }
-  }catch(e){if(raw){tasks=[];cKey=null;enter();}else{err.textContent='Something went wrong. Try again.';}}
+  }catch(e){err.textContent='Something went wrong. Try again.';}
+  finally{$('lbtn').disabled=false;}
 }
-function forgot(){if(!confirm('Resetting will permanently delete ALL saved tasks and history. Continue?'))return;try{localStorage.removeItem(ENC);localStorage.removeItem(KEY);}catch(e){}tasks=[];cKey=null;showLock();}
-$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
-$('pw2').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
+function showRK(rk){curRK=rk;hideAll();$('rk').style.display='';$('rkv').textContent=rk;$('rkok').checked=false;$('rkgo').disabled=true;}
+function goRK(){if(!$('rkok').checked)return;curRK='';enter();}
+function copyRK(){try{navigator.clipboard.writeText(curRK).then(function(){alert('Copied.');});}catch(e){alert('Please copy it by hand.');}}
+function download(name,text,type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}
+function dlRK(){download('task-notes-recovery-key.txt','My Task Notes recovery key\n\n'+curRK+'\n\nKeep this file private. Anyone with it can reset your password.\n');}
+function showRecover(){if(!ls(ENC2)){alert('Recovery keys are created after you log in once with your password. Your data is still safe.');return;}
+  hideAll();$('rec').style.display='';$('rk1').value='';$('np1').value='';$('np2').value='';$('rerr').textContent='';}
+async function doRecover(){var err=$('rerr'),rk=norm($('rk1').value),n1=$('np1').value,n2=$('np2').value;err.textContent='';
+  if(rk.length!==20){err.textContent='Enter the full 20-character recovery key.';return;}
+  if(n1.length<4){err.textContent='New password needs at least 4 characters.';return;}
+  if(n1!==n2){err.textContent='Passwords do not match.';return;}
+  $('rbtn').disabled=true;decoy=false;
+  try{
+    await sleep(Math.min(fails*2000,10000));
+    var st=JSON.parse(ls(ENC2));
+    raw=await adec(await derive(rk,unb64(st.rs)),st.rc);dek=await impDek(raw);
+    tasks=JSON.parse(new TextDecoder().decode(await adec(dek,{i:st.i,d:st.d})));
+    vault={ps:st.ps,pw:st.pw,rs:st.rs,rc:st.rc};await wrapPw(n1);await persist();fails=0;enter();
+  }catch(e){fails++;raw=null;dek=null;vault=null;tasks=[];err.textContent='Recovery key is incorrect.';}
+  finally{$('rbtn').disabled=false;}
+}
 function fmt(t){var d=new Date(t);return d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})+', '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});}
-function esc(s){return s.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]});}
-function status(t){if(t.done)return'done';return(Date.now()-t.created>=DAY)?'late':'pending';}
-function addTask(){var i=document.getElementById('inp'),v=i.value.trim();if(!v)return;
-  tasks.unshift({id:Date.now()+Math.random().toString(36).slice(2,6),text:v,created:Date.now(),done:false,doneAt:null});
-  i.value='';save();render();}
-function toggle(id){tasks.forEach(function(t){if(t.id===id){t.done=!t.done;t.doneAt=t.done?Date.now():null;}});save();render();}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]});}
+function limit(t){return t.due||t.created+DAY;}
+function status(t){if(t.done)return'done';return Date.now()>=limit(t)?'late':'pending';}
+function addTask(){var v=$('inp').value.trim();if(!v||(!dek&&!decoy))return;var d=$('due').value;
+  tasks.unshift({id:Date.now()+Math.random().toString(36).slice(2,6),text:v,created:Date.now(),due:d?new Date(d).getTime():null,pri:$('pri').value,done:false,doneAt:null});
+  $('inp').value='';$('due').value='';save();render();}
+function find(id){return tasks.filter(function(t){return t.id===id})[0];}
+function toggle(id){var t=find(id);if(!t)return;t.done=!t.done;t.doneAt=t.done?Date.now():null;save();render();}
+function edit(id){var t=find(id);if(!t)return;var v=prompt('Edit task',t.text);if(v&&v.trim()){t.text=v.trim();save();render();}}
 function del(id){if(!confirm('Delete this task?'))return;tasks=tasks.filter(function(t){return t.id!==id});save();render();}
 function card(t){var s=status(t),cls=s==='done'?'done':s==='late'?'late':'';
   var badge=s==='done'?'<span class="badge b-done">Completed '+fmt(t.doneAt)+'</span>':s==='late'?'<span class="badge b-late">Overdue — not completed</span>':'Pending';
+  var pri=t.pri?'<span class="pri p-'+t.pri+'">'+({low:'Low',med:'Medium',high:'High'}[t.pri]||'')+'</span>':'';
   return '<div class="task '+(t.done?'done-t':'')+'"><button class="tick '+cls+'" onclick="toggle(\''+t.id+'\')" aria-label="Toggle done">'+(s==='pending'?'':'✓')+'</button>'
-   +'<div class="body"><div class="txt">'+esc(t.text)+'</div><div class="meta">Added '+fmt(t.created)+' · '+badge+'</div></div>'
-   +'<button class="del" onclick="del(\''+t.id+'\')" aria-label="Delete">×</button></div>';}
-function render(){
-  var l=document.getElementById('list');
-  l.innerHTML=tasks.length?tasks.map(card).join(''):'<div class="empty">No tasks yet. Add your first one above.</div>';
-  renderHist();
-}
-function renderHist(){
-  var m=document.getElementById('month').value;if(!m)return;
+   +'<div class="body"><div class="txt">'+pri+esc(t.text)+'</div><div class="meta">Added '+fmt(t.created)+(t.due?' · Due '+fmt(t.due):'')+' · '+badge+'</div></div>'
+   +'<button class="edt" onclick="edit(\''+t.id+'\')" aria-label="Edit">✎</button><button class="del" onclick="del(\''+t.id+'\')" aria-label="Delete">×</button></div>';}
+function setF(f){flt=f;render();}
+function render(){sig=tasks.map(status).join('');
+  var c={all:tasks.length,pending:0,late:0,done:0};tasks.forEach(function(t){c[status(t)]++;});
+  var L=[['all','All'],['pending','Pending'],['late','Overdue'],['done','Done']];
+  $('chips').innerHTML=L.map(function(x){return '<button class="chip'+(flt===x[0]?' on':'')+'" onclick="setF(\''+x[0]+'\')">'+x[1]+' '+c[x[0]]+'</button>';}).join('');
+  var qq=q.toLowerCase(),rank={late:0,pending:1,done:2};
+  var arr=tasks.filter(function(t){return(flt==='all'||status(t)===flt)&&(!qq||t.text.toLowerCase().indexOf(qq)>-1);});
+  arr.sort(function(a,b){var ra=rank[status(a)],rb=rank[status(b)];if(ra!==rb)return ra-rb;if(ra===2)return(b.doneAt||0)-(a.doneAt||0);return limit(a)-limit(b);});
+  $('list').innerHTML=arr.length?arr.map(card).join(''):'<div class="empty">'+(tasks.length?'No tasks match.':'No tasks yet. Add your first one above.')+'</div>';
+  renderHist();}
+function mix(f,t,k){return 'hsl('+Math.round(f[0]+(t[0]-f[0])*k)+','+Math.round(f[1]+(t[1]-f[1])*k)+'%,'+Math.round(f[2]+(t[2]-f[2])*k)+'%)';}
+function ring4(p,f,t,n,label,id){var y=68-p/100*64,top=mix(f,t,0),bot=mix(f,t,1),W='M0 0Q9 -5 18 0T36 0T54 0T72 0T90 0T108 0T126 0T144 0V90H0Z';
+  return '<div class="stat"><svg viewBox="0 0 72 72"><defs><linearGradient id="w'+id+'" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="'+Math.max(68-y,2).toFixed(1)+'"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bot+'"/></linearGradient><clipPath id="c'+id+'"><circle cx="36" cy="36" r="31"/></clipPath></defs><circle cx="36" cy="36" r="31" style="fill:'+bot+';opacity:.12"/><g clip-path="url(#c'+id+')"'+(p?'':' style="display:none"')+'><g transform="translate(0,'+y.toFixed(1)+')"><path class="wv wv2" d="'+W+'" fill="'+top+'" opacity=".5" transform="translate(0,-2)"/><path class="wv" d="'+W+'" fill="url(#w'+id+')"/></g></g><text x="36" y="41" text-anchor="middle" style="fill:'+(p>=55?'#fff':bot)+';font-size:15px;font-weight:700'+(p>=55?';filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))':'')+'">'+p+'%</text></svg><b style="color:'+bot+'">'+n+'</b><span>'+label+'</span></div>';}
+function renderHist(){var m=$('month').value;if(!m)return;
   var arr=tasks.filter(function(t){var d=new Date(t.created);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m;});
-  var done=arr.filter(function(t){return t.done}).length,late=arr.filter(function(t){return status(t)==='late'}).length;
-  function ring(p,col,n,label){var C=163.36,off=C*(1-p/100);return '<div class="stat"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke-width="7" style="stroke:var(--line)"/><circle class="ring-p" cx="32" cy="32" r="26" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" transform="rotate(-90 32 32)" style="stroke:'+col+'"/><text x="32" y="37" text-anchor="middle" style="fill:var(--text);font-size:14px;font-weight:700">'+p+'%</text></svg><b style="color:'+col+'">'+n+'</b><span>'+label+'</span></div>';}
-  var tot=arr.length,pd=tot?Math.round(done/tot*100):0,pn=tot?100-pd:0;
-  function ring2(p,c1,c2,n,label,id){var C=182.21,off=C*(1-p/100);return '<div class="stat"><svg viewBox="0 0 72 72"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs><circle cx="36" cy="36" r="29" fill="none" stroke-width="8" style="stroke:var(--line);opacity:.6"/><circle class="ring-p" cx="36" cy="36" r="29" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" stroke-opacity="'+(p?1:0)+'" transform="rotate(-90 36 36)" stroke="url(#g'+id+')" style="filter:drop-shadow(0 0 3px '+c2+')"/><text x="36" y="41" text-anchor="middle" style="fill:'+c2+';font-size:15px;font-weight:700">'+p+'%</text></svg><b style="color:'+c2+'">'+n+'</b><span>'+label+'</span></div>';}
-  function pair(s){var h=Math.round(s*1.3);return['hsl('+Math.max(h-15,0)+',90%,60%)','hsl('+h+',85%,46%)'];}
-  function mix(f,t,k){return 'hsl('+Math.round(f[0]+(t[0]-f[0])*k)+','+Math.round(f[1]+(t[1]-f[1])*k)+'%,'+Math.round(f[2]+(t[2]-f[2])*k)+'%)';}
-  function ring3(p,f,t,n,label){var C=182.21,N=60,len=C/N,cnt=p/100*N,segs='',i;
-    for(i=0;i<cnt;i++){var l=Math.min(len,(cnt-i)*len),k=cnt>1?i/(cnt-1):1;
-      segs+='<circle cx="36" cy="36" r="29" fill="none" stroke-width="8" stroke="'+mix(f,t,k)+'" stroke-dasharray="'+(l+0.5)+' '+C+'" stroke-dashoffset="'+(-i*len)+'" transform="rotate(-90 36 36)"/>';}
-    var endC=mix(f,t,p?1:0),caps='';
-    if(p>0&&p<100){var th=(-90+p*3.6)*Math.PI/180;caps='<circle cx="36" cy="7" r="4" fill="'+mix(f,t,0)+'"/><circle cx="'+(36+29*Math.cos(th)).toFixed(2)+'" cy="'+(36+29*Math.sin(th)).toFixed(2)+'" r="4" fill="'+endC+'"/>';}
-    return '<div class="stat"><svg viewBox="0 0 72 72"><circle cx="36" cy="36" r="29" fill="none" stroke-width="8" style="stroke:var(--line);opacity:.6"/><g class="ring-p" style="filter:drop-shadow(0 0 3px '+endC+')">'+segs+caps+'</g><text x="36" y="41" text-anchor="middle" style="fill:'+endC+';font-size:15px;font-weight:700">'+p+'%</text></svg><b style="color:'+endC+'">'+n+'</b><span>'+label+'</span></div>';}
-  function ring4(p,f,t,n,label,id){var y=68-p/100*64,top=mix(f,t,0),bot=mix(f,t,1),W='M0 0Q9 -5 18 0T36 0T54 0T72 0T90 0T108 0T126 0T144 0V90H0Z';
-    return '<div class="stat"><svg viewBox="0 0 72 72"><defs><linearGradient id="w'+id+'" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="'+Math.max(68-y,2).toFixed(1)+'"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bot+'"/></linearGradient><clipPath id="c'+id+'"><circle cx="36" cy="36" r="31"/></clipPath></defs><circle cx="36" cy="36" r="31" stroke-width="2" style="fill:var(--card);stroke:var(--line)"/><g clip-path="url(#c'+id+')"'+(p?'':' style="display:none"')+'><g transform="translate(0,'+y.toFixed(1)+')"><path class="wv wv2" d="'+W+'" fill="'+top+'" opacity=".5" transform="translate(0,-2)"/><path class="wv" d="'+W+'" fill="url(#w'+id+')"/></g></g><circle cx="36" cy="36" r="31" fill="none" stroke-width="2.5" stroke="'+bot+'"/><text x="36" y="41" text-anchor="middle" style="fill:'+(p>=55?'#fff':bot)+';font-size:15px;font-weight:700'+(p>=55?';filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))':'')+'">'+p+'%</text></svg><b style="color:'+bot+'">'+n+'</b><span>'+label+'</span></div>';}
-  document.getElementById('stats').innerHTML=ring4(tot?100:0,[255,90,80],[320,75,50],tot,'Total','t')+ring4(pd,[140,60,72],[140,72,30],done,'Completed','c')+ring4(pn,[0,85,80],[0,75,40],tot-done,'Not completed','n');
-  document.getElementById('hlist').innerHTML=arr.length?arr.map(card).join(''):'<div class="empty">No tasks in this month.</div>';
-}
-function setTab(t){tab=t;document.getElementById('v-active').style.display=t==='active'?'':'none';document.getElementById('v-hist').style.display=t==='hist'?'':'none';
-  document.getElementById('t-active').className='tab'+(t==='active'?' on':'');document.getElementById('t-hist').className='tab'+(t==='hist'?' on':'');}
-document.getElementById('inp').addEventListener('keydown',function(e){if(e.key==='Enter')addTask();});
-document.getElementById('month').addEventListener('change',renderHist);
-var n=new Date();document.getElementById('month').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
-document.getElementById('today').textContent=n.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-showLock();
-setInterval(function(){if(cKey)render();},60000);
+  var tot=arr.length,done=arr.filter(function(t){return t.done}).length,pd=tot?Math.round(done/tot*100):0,pn=tot?100-pd:0;
+  var sc=function(n,l,c){return '<div class="stat"><b style="color:'+c+'">'+n+'</b><span>'+l+'</span></div>';};
+  $('stats').innerHTML=ring4(tot?100:0,[255,90,80],[320,75,50],tot,'Total','t')+ring4(pd,[140,60,72],[140,72,30],done,'Completed','c')+ring4(pn,[0,85,80],[0,75,40],tot-done,'Not completed','n');
+  $('hlist').innerHTML=tot?arr.map(card).join(''):'<div class="empty">No tasks in this month.</div>';}
+function setTab(t){['active','hist','more'].forEach(function(x){$('v-'+x).style.display=x===t?'':'none';$('t-'+x).className='tab'+(x===t?' on':'');});}
+function getSet(){try{return JSON.parse(localStorage.getItem(SET))||{};}catch(e){return{};}}
+function putSet(o){try{localStorage.setItem(SET,JSON.stringify(o));}catch(e){}}
+function setAuto(v){var s=getSet();s.auto=+v;putSet(s);}
+function applyTheme(m){var r=document.documentElement;if(m==='light'||m==='dark')r.setAttribute('data-theme',m);else r.removeAttribute('data-theme');}
+function setTheme(m){var s=getSet();s.theme=m;putSet(s);applyTheme(m);}
+function enableNotif(){if(!window.Notification){alert('Notifications are not supported on this device.');return;}
+  Notification.requestPermission().then(function(p){var s=getSet();s.notif=p==='granted';putSet(s);$('nst').textContent=p==='granted'?'Notifications are on.':'Permission was not granted.';});}
+function exportData(){if(!dek)return;download('task-notes-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'task-notes',exported:new Date().toISOString(),tasks:tasks},null,2),'application/json');}
+function importData(inp){var f=inp.files[0];if(!f||!dek)return;var r=new FileReader();r.onload=function(){try{var j=JSON.parse(r.result),a=Array.isArray(j)?j:j.tasks;if(!Array.isArray(a))throw 0;var have={};tasks.forEach(function(t){have[t.id]=1});var n=0;
+  a.forEach(function(t){if(t&&t.id&&t.text&&!have[t.id]){tasks.push({id:String(t.id),text:String(t.text),created:+t.created||Date.now(),due:t.due||null,pri:t.pri||'med',done:!!t.done,doneAt:t.doneAt||null});n++;}});
+  save();render();alert('Imported '+n+' task(s).');}catch(e){alert('That file could not be read.');}inp.value='';};r.readAsText(f);}
+async function changePw(){var a=$('cp1').value,b=$('cp2').value;if(!dek)return;if(a.length<4){alert('Use at least 4 characters.');return;}if(a!==b){alert('Passwords do not match.');return;}
+  await wrapPw(a);await persist();$('cp1').value='';$('cp2').value='';alert('Password changed.');}
+async function newRecovery(){if(!dek)return;if(!confirm('This replaces your old recovery key. Continue?'))return;var rk=await newRK();await persist();showRK(rk);}
+function eraseAll(){if(!dek)return;if(prompt('This deletes ALL tasks and the password. Type DELETE to confirm.')!=='DELETE')return;
+  try{localStorage.removeItem(ENC2);localStorage.removeItem(ENC);localStorage.removeItem(KEY);}catch(e){}lockApp();}
+function tick(){var s=getSet(),a=s.auto===undefined?5:s.auto;
+  if((dek||decoy)&&a>0&&Date.now()-last>a*60000){lockApp();return;}
+  if(!dek)return;
+  if(s.notif&&window.Notification&&Notification.permission==='granted'){var ch=false;tasks.forEach(function(t){if(t.due&&!t.done&&!t.n&&Date.now()>=t.due){t.n=1;ch=true;try{new Notification('Task due',{body:t.text});}catch(e){}}});if(ch)save();}
+  if(tasks.map(status).join('')!==sig)render();}
+['pointerdown','keydown','touchstart'].forEach(function(e){document.addEventListener(e,function(){last=Date.now();},{passive:true});});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)tick();});
+$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
+$('pw2').addEventListener('keydown',function(e){if(e.key==='Enter')submitLock();});
+$('np2').addEventListener('keydown',function(e){if(e.key==='Enter')doRecover();});
+$('inp').addEventListener('keydown',function(e){if(e.key==='Enter')addTask();});
+$('srch').addEventListener('input',function(){q=this.value.trim();render();});
+$('month').addEventListener('change',renderHist);
+var n=new Date();$('month').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+$('today').textContent=n.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+var s0=getSet();applyTheme(s0.theme||'auto');$('theme').value=s0.theme||'auto';$('auto').value=String(s0.auto===undefined?5:s0.auto);if(s0.notif)$('nst').textContent='Notifications are on.';
+showLock();setInterval(tick,30000);
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
